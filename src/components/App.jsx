@@ -32,7 +32,7 @@ export class App extends Component {
   }
 
   addContact = contact => {
-    const isInContacts = this.state.contacts.some(
+    const isInContacts = this.state.contacts.find(
       ({ name }) =>
         name.toLowerCase().trim() === contact.name.toLowerCase().trim()
     );
