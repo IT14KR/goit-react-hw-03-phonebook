@@ -14,15 +14,30 @@ export class App extends Component {
       { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
     ],
     filter: '',
-    name: '',
-    number: '',
   };
 
+  componentDidMount() {
+    const contacts = localStorage.getItem('contacts');
+    const parsedContacts = JSON.parse(contacts);
+
+    if (parsedContacts) {
+      this.setState({ contacts: parsedContacts });
+    }
+  }
+
+  componentDidUpdate(_, prevState) {
+    if (this.state.contacts !== prevState.contacts) {
+      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
+    }
+  }
+
   addContact = contact => {
-    const isContacts = this.state.contacts.find(
-      ({ name }) => name.toLowerCase() === contact.name.toLowerCase()
+    const isInContacts = this.state.contacts.some(
+      ({ name }) =>
+        name.toLowerCase().trim() === contact.name.toLowerCase().trim()
     );
-    if (isContacts) {
+
+    if (isInContacts) {
       alert(`${contact.name} is already in contacts`);
       return;
     }
@@ -32,27 +47,30 @@ export class App extends Component {
   };
 
   changeFilter = event => {
-    this.setState({ filter: event.target.value });
+    this.setState({ filter: event.target.value.trim() });
   };
 
-  getContacts = () => {
+  getVisibleContacts = () => {
     const { filter, contacts } = this.state;
-    const filteredContacts = filter.toLowerCase();
+    const normalizedFilter = filter.toLowerCase();
 
     return contacts.filter(contact =>
-      contact.name.toLowerCase().includes(filteredContacts)
+      contact.name.toLowerCase().includes(normalizedFilter)
     );
   };
 
   removeContact = contactId => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(({ id }) => id !== contactId),
-    }));
+    this.setState(prevState => {
+      return {
+        contacts: prevState.contacts.filter(({ id }) => id !== contactId),
+      };
+    });
   };
 
   render() {
-    const visibleContacts = this.getContacts();
+    const visibleContacts = this.getVisibleContacts();
     const { filter } = this.state;
+
     return (
       <Container>
         <Title>Phonebook</Title>
@@ -60,15 +78,16 @@ export class App extends Component {
         <ContactForm onSubmit={this.addContact} />
 
         <SubTitle>Contacts</SubTitle>
-
-        <Filter value={filter} changeFilter={this.changeFilter} />
         {this.state.contacts.length > 0 ? (
+          <Filter value={filter} onChangeFilter={this.changeFilter} />
+        ) : (
+          <Wrapper>Your phonebook is empty. Add first contact!</Wrapper>
+        )}
+        {this.state.contacts.length > 0 && (
           <ContactList
             contacts={visibleContacts}
             onRemoveContact={this.removeContact}
           />
-        ) : (
-          <Wrapper>Your phonebook is empty. Add first contact!</Wrapper>
         )}
       </Container>
     );
